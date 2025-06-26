@@ -65,6 +65,32 @@ if missing_cols:
 # Filter hanya LOCATION_TYPE = CUSTOMER
 df = df[df['LOCATION_TYPE'] == 'CUSTOMER']
 
+# -------------------- PERHITUNGAN OTOMATIS INDIKATOR TAMBAHAN -------------------- #
+with st.spinner("🔍 Menghitung indikator tambahan..."):
+    try:
+        df['unbalance_arus'] = (
+            abs(df['CURRENT_L1'] - df['CURRENT_L2']) > 10
+        ) | (abs(df['CURRENT_L2'] - df['CURRENT_L3']) > 10)
+        df['unbalance_arus'] = df['unbalance_arus'].astype(int)
+
+        df['arus_netral_lebih_besar'] = (
+            df['CURRENT_NEUTRAL'] > df[['CURRENT_L1', 'CURRENT_L2', 'CURRENT_L3']].max(axis=1)
+        ).astype(int)
+
+        df['urutan_fasa_terbalik'] = (df['PHASE_SEQUENCE'] == 'K-L').astype(int)
+
+        df['kwh_import_lebih_besar_export'] = (
+            df['KWH_IMPORT'] > df['KWH_EXPORT']
+        ).astype(int)
+
+        df['tegangan_hilang_ada_arus'] = (
+            ((df['VOLTAGE_L1'] == 0) & (df['CURRENT_L1'] > 0)) |
+            ((df['VOLTAGE_L2'] == 0) & (df['CURRENT_L2'] > 0)) |
+            ((df['VOLTAGE_L3'] == 0) & (df['CURRENT_L3'] > 0))
+        ).astype(int)
+    except Exception as e:
+        st.warning(f"⚠️ Gagal menghitung indikator tambahan: {e}")
+
 # -------------------- FILTER INDIKATOR -------------------- #
 st.sidebar.header("🧮 Filter Indikator")
 indikator_kolom = [
