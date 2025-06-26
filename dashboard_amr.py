@@ -55,9 +55,15 @@ if df.empty:
     st.warning("Belum ada data diunggah.")
     st.stop()
 
+# Validasi kolom wajib
+required_cols = ['IDPEL', 'LOCATION_TYPE']
+missing_cols = [col for col in required_cols if col not in df.columns]
+if missing_cols:
+    st.error(f"❌ Kolom berikut wajib ada: {', '.join(missing_cols)}")
+    st.stop()
+
 # Filter hanya LOCATION_TYPE = CUSTOMER
-if 'LOCATION_TYPE' in df.columns:
-    df = df[df['LOCATION_TYPE'] == 'CUSTOMER']
+df = df[df['LOCATION_TYPE'] == 'CUSTOMER']
 
 # -------------------- FILTER INDIKATOR -------------------- #
 st.sidebar.header("🧮 Filter Indikator")
@@ -79,6 +85,10 @@ selected_indikator = st.sidebar.multiselect("Pilih indikator untuk analisa:", in
 if selected_indikator:
     df['Jumlah Indikator Aktif'] = df[selected_indikator].sum(axis=1)
     df = df[df['Jumlah Indikator Aktif'] > 0]
+
+    if 'IDPEL' not in df.columns:
+        st.error("❌ Kolom 'IDPEL' tidak ditemukan di data.")
+        st.stop()
 
     # Gabungkan berdasarkan IDPEL (tidak boleh muncul 2x)
     agg_dict = {col: 'max' for col in selected_indikator}
